@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: anna-mvp-core
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: WEBHOOK_HASH_SECRET
+        sync: false # manuell im Dashboard eintragen, landet nie im Repo
+      - key: DASHBOARD_API_TOKEN
+        sync: false
+      - key: JOB_TRIGGER_TOKEN
+        sync: false
+      - key: WHATSAPP_MODE
+        value: mock
+      - key: AI_MODE
+        value: mock
+      - key: ANTHROPIC_API_KEY
+        sync: false
