@@ -46,17 +46,25 @@ export function createWhatsAppWebhookRouter(
       // Notwendigkeit, ueber whatsappNumberEncrypted zu entschluesseln (das
       // ist nur fuer spaeteren, unabhaengigen Scheduler-Versand noetig,
       // siehe routes/jobs.ts).
+      //
+      // Jede Nachricht einzeln try/catch: ein fehlgeschlagenes Video (z. B.
+      // wenn WhatsApp die Datei nicht laden kann) darf nicht die restlichen
+      // Nachrichten derselben Antwort (z. B. Feedback-Buttons) verhindern.
       for (const message of outgoing) {
-        if (message.type === "text") {
-          if (message.text) {
-            await whatsAppClient.sendText(parsed.from, message.text);
+        try {
+          if (message.type === "text") {
+            if (message.text) {
+              await whatsAppClient.sendText(parsed.from, message.text);
+            }
+          } else if (message.type === "video") {
+            await whatsAppClient.sendVideo(parsed.from, message.videoUrl, message.caption);
+          } else if (message.type === "image") {
+            await whatsAppClient.sendImage(parsed.from, message.imageUrl, message.caption);
+          } else {
+            await whatsAppClient.sendQuickReply(parsed.from, message.text, message.options);
           }
-        } else if (message.type === "video") {
-          await whatsAppClient.sendVideo(parsed.from, message.videoUrl, message.caption);
-        } else if (message.type === "image") {
-          await whatsAppClient.sendImage(parsed.from, message.imageUrl, message.caption);
-        } else {
-          await whatsAppClient.sendQuickReply(parsed.from, message.text, message.options);
+        } catch (sendError) {
+          console.error(`[webhook] Versand einer ${message.type}-Nachricht fehlgeschlagen:`, sendError);
         }
       }
     } catch (error) {

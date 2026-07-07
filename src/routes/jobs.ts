@@ -74,10 +74,14 @@ async function sendAllBatches(
   for (const batch of batches) {
     const whatsappNumber = decryptNumber(batch.whatsappNumberEncrypted, hashSecret);
     for (const message of batch.messages) {
-      if (message.type === "text") await whatsAppClient.sendText(whatsappNumber, message.text);
-      else if (message.type === "video") await whatsAppClient.sendVideo(whatsappNumber, message.videoUrl, message.caption);
-      else if (message.type === "image") await whatsAppClient.sendImage(whatsappNumber, message.imageUrl, message.caption);
-      else if (message.type === "quickReply") await whatsAppClient.sendQuickReply(whatsappNumber, message.text, message.options);
+      try {
+        if (message.type === "text") await whatsAppClient.sendText(whatsappNumber, message.text);
+        else if (message.type === "video") await whatsAppClient.sendVideo(whatsappNumber, message.videoUrl, message.caption);
+        else if (message.type === "image") await whatsAppClient.sendImage(whatsappNumber, message.imageUrl, message.caption);
+        else if (message.type === "quickReply") await whatsAppClient.sendQuickReply(whatsappNumber, message.text, message.options);
+      } catch (sendError) {
+        console.error(`[jobs] Versand einer ${message.type}-Nachricht fehlgeschlagen:`, sendError);
+      }
     }
   }
 }
