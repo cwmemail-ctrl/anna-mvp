@@ -8,6 +8,7 @@ function freshEmployee(): Employee {
     id: "e1",
     companyId: "c1",
     whatsappNumberHash: "hash",
+    whatsappNumberEncrypted: "enc-test",
     onboardingStatus: "AWAITING_CONSENT",
     onboardingStep: "CONSENT",
     createdAt: new Date(),

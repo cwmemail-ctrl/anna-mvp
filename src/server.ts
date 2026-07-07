@@ -9,6 +9,8 @@ import { createDashboardRouter } from "./routes/dashboard.js";
 import { createJobsRouter } from "./routes/jobs.js";
 import { createWhatsAppWebhookRouter } from "./routes/whatsapp.webhook.js";
 import { CoachingService } from "./services/coaching.service.js";
+import { Dialog360WhatsAppClient } from "./whatsapp/client.360dialog.js";
+import type { WhatsAppClient } from "./whatsapp/client.interface.js";
 import { MockWhatsAppClient } from "./whatsapp/client.mock.js";
 
 const config = loadConfig();
@@ -24,7 +26,10 @@ const borderlineCases = new InMemoryBorderlineCaseRepository();
 const aiClient: AIClient =
   config.aiMode === "live" ? new AnthropicAIClient(config.anthropicApiKey!) : new MockAIClient();
 
-const whatsAppClient = new MockWhatsAppClient(); // live-Modus wirft bereits in loadConfig()
+const whatsAppClient: WhatsAppClient =
+  config.whatsappMode === "live"
+    ? new Dialog360WhatsAppClient(config.dialog360ApiKey!, config.dialog360BaseUrl!)
+    : new MockWhatsAppClient();
 
 const coachingService = new CoachingService(employees, conversations, usageEvents, aiClient, borderlineCases);
 
@@ -32,7 +37,7 @@ const app = express();
 app.use(express.json());
 app.use("/api/v1", createWhatsAppWebhookRouter(coachingService, whatsAppClient, config.webhookHashSecret));
 app.use("/api/v1", createDashboardRouter(employees, usageEvents, config.dashboardApiToken));
-app.use("/api/v1", createJobsRouter(coachingService, whatsAppClient, config.jobTriggerToken));
+app.use("/api/v1", createJobsRouter(coachingService, whatsAppClient, config.jobTriggerToken, config.webhookHashSecret));
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 

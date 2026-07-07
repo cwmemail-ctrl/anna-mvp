@@ -129,9 +129,17 @@ Regel 2).
 
 ## Auf echte Infrastruktur umstellen (später)
 
-- **BSP:** `src/whatsapp/client.interface.ts` implementieren (z. B. `client.360dialog.ts`),
-  in `src/server.ts` statt `MockWhatsAppClient` einsetzen, `WHATSAPP_MODE=live` erlauben
-  (aktuell wirft `loadConfig()` bewusst einen Fehler, da die BSP-Wahl noch offen ist).
+- **BSP (360dialog):** ✅ implementiert (`client.360dialog.ts`). Zum Live-Schalten in `.env`:
+  ```
+  WHATSAPP_MODE=live
+  DIALOG360_API_KEY=<Key aus dem 360dialog-Dashboard, Direct API Access>
+  DIALOG360_BASE_URL=https://waba-sandbox.360dialog.io/v1
+  ```
+  Zusaetzlich im 360dialog-Dashboard bei **"2 Set webhook"** die Render-URL eintragen:
+  `https://<dein-service>.onrender.com/api/v1/webhook/whatsapp`
+  Sobald produktiv geschaltet wird, `DIALOG360_BASE_URL` auf die von 360dialog
+  mitgeteilte Produktions-URL aendern (Sandbox und Produktion haben unterschiedliche
+  Adressen).
 - **AI:** `AI_MODE=live` + `ANTHROPIC_API_KEY` in `.env` setzen – die echte Implementierung
   (`AnthropicAIClient`) existiert bereits.
 - **DB:** Die drei Repository-Interfaces in `src/db/*.repository.ts` gegen eine

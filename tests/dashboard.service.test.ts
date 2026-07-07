@@ -8,9 +8,9 @@ test("computeCompanySummary: optInRate berechnet sich aus Anzahl mit consentGive
   const employees = new InMemoryEmployeeRepository();
   const usageEvents = new InMemoryUsageEventRepository();
 
-  const e1 = await employees.create("hash1", "company-a");
+  const e1 = await employees.create("hash1", "enc-test", "company-a");
   await employees.update({ ...e1, consentGivenAt: new Date() });
-  await employees.create("hash2", "company-a"); // keine Einwilligung
+  await employees.create("hash2", "enc-test", "company-a"); // keine Einwilligung
 
   const summary = await computeCompanySummary(employees, usageEvents, "company-a");
   assert.equal(summary.optInRate, 0.5);
@@ -58,7 +58,7 @@ test("computeDepartmentSummaries: unter Mindestgruppengroesse liefert null statt
   const usageEvents = new InMemoryUsageEventRepository();
 
   for (let i = 0; i < MIN_DEPARTMENT_GROUP_SIZE - 1; i++) {
-    const e = await employees.create(`hash-${i}`, "company-a");
+    const e = await employees.create(`hash-${i}`, "enc-test", "company-a");
     await employees.update({ ...e, departmentId: "housekeeping" });
   }
 
@@ -73,7 +73,7 @@ test("computeDepartmentSummaries: ab Mindestgruppengroesse werden echte Zahlen g
   const usageEvents = new InMemoryUsageEventRepository();
 
   for (let i = 0; i < MIN_DEPARTMENT_GROUP_SIZE; i++) {
-    const e = await employees.create(`hash-${i}`, "company-a");
+    const e = await employees.create(`hash-${i}`, "enc-test", "company-a");
     await employees.update({ ...e, departmentId: "service" });
   }
 

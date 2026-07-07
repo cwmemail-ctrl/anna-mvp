@@ -5,23 +5,23 @@ import type { WhatsAppClient } from "./client.interface.js";
 // "Offene Punkte"), kommt eine zweite Implementierung dieses Interfaces dazu --
 // der Rest des Systems (Routen, Services) ändert sich dadurch nicht.
 export class MockWhatsAppClient implements WhatsAppClient {
-  async sendText(whatsappNumberHash: string, text: string): Promise<void> {
-    console.log(`[MockWhatsAppClient] -> ${whatsappNumberHash}:\n${text}\n`);
+  async sendText(whatsappNumber: string, text: string): Promise<void> {
+    console.log(`[MockWhatsAppClient] -> ${whatsappNumber}:\n${text}\n`);
   }
 
-  async sendVideo(whatsappNumberHash: string, videoUrl: string, caption?: string): Promise<void> {
+  async sendVideo(whatsappNumber: string, videoUrl: string, caption?: string): Promise<void> {
     console.log(
-      `[MockWhatsAppClient] -> ${whatsappNumberHash} [VIDEO]:\n${videoUrl}${caption ? `\nCaption: ${caption}` : ""}\n`
+      `[MockWhatsAppClient] -> ${whatsappNumber} [VIDEO]:\n${videoUrl}${caption ? `\nCaption: ${caption}` : ""}\n`
     );
   }
 
-  async sendImage(whatsappNumberHash: string, imageUrl: string, caption?: string): Promise<void> {
+  async sendImage(whatsappNumber: string, imageUrl: string, caption?: string): Promise<void> {
     console.log(
-      `[MockWhatsAppClient] -> ${whatsappNumberHash} [IMAGE]:\n${imageUrl}${caption ? `\nCaption: ${caption}` : ""}\n`
+      `[MockWhatsAppClient] -> ${whatsappNumber} [IMAGE]:\n${imageUrl}${caption ? `\nCaption: ${caption}` : ""}\n`
     );
   }
 
-  async sendQuickReply(whatsappNumberHash: string, text: string, options: string[]): Promise<void> {
-    console.log(`[MockWhatsAppClient] -> ${whatsappNumberHash} [QUICK_REPLY]:\n${text}\nOptionen: ${options.join(" | ")}\n`);
+  async sendQuickReply(whatsappNumber: string, text: string, options: string[]): Promise<void> {
+    console.log(`[MockWhatsAppClient] -> ${whatsappNumber} [QUICK_REPLY]:\n${text}\nOptionen: ${options.join(" | ")}\n`);
   }
 }

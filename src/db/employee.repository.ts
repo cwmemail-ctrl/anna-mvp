@@ -3,7 +3,7 @@ import type { Employee } from "../types/domain.js";
 
 export interface EmployeeRepository {
   findByWhatsappHash(whatsappNumberHash: string): Promise<Employee | undefined>;
-  create(whatsappNumberHash: string, companyId: string): Promise<Employee>;
+  create(whatsappNumberHash: string, whatsappNumberEncrypted: string, companyId: string): Promise<Employee>;
   update(employee: Employee): Promise<Employee>;
   // Fuer Dashboard-Aggregation (siehe dashboard.service.ts) -- liefert nur
   // die Mitarbeitenden eines Unternehmens, keine Einzeldaten-Ausgabe direkt
@@ -13,8 +13,8 @@ export interface EmployeeRepository {
 
 // In-Memory-Implementierung für den lokalen MVP-Betrieb ohne echte Infra.
 // Wichtig: Kein Klartext-Bezug zur Telefonnummer wird gespeichert (siehe
-// DATENBANKSCHEMA.md) -- das Hashing passiert bereits in der /whatsapp-Schicht,
-// bevor diese Klasse überhaupt aufgerufen wird.
+// DATENBANKSCHEMA.md) -- das Hashing/Verschluesseln passiert bereits in der
+// /whatsapp-Schicht, bevor diese Klasse überhaupt aufgerufen wird.
 export class InMemoryEmployeeRepository implements EmployeeRepository {
   private readonly byId = new Map<string, Employee>();
   private readonly idByHash = new Map<string, string>();
@@ -24,11 +24,12 @@ export class InMemoryEmployeeRepository implements EmployeeRepository {
     return id ? this.byId.get(id) : undefined;
   }
 
-  async create(whatsappNumberHash: string, companyId: string): Promise<Employee> {
+  async create(whatsappNumberHash: string, whatsappNumberEncrypted: string, companyId: string): Promise<Employee> {
     const employee: Employee = {
       id: randomUUID(),
       companyId,
       whatsappNumberHash,
+      whatsappNumberEncrypted,
       onboardingStatus: "NOT_STARTED",
       onboardingStep: "CONSENT",
       createdAt: new Date(),

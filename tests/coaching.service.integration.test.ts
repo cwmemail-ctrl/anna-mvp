@@ -18,35 +18,35 @@ function freshService() {
 }
 
 async function completeOnboarding(service: CoachingService, hash: string) {
-  await service.handleIncomingMessage({ whatsappNumberHash: hash, text: "Hallo", receivedAt: new Date() });
-  await service.handleIncomingMessage({ whatsappNumberHash: hash, text: "Ja", receivedAt: new Date() });
-  await service.handleIncomingMessage({ whatsappNumberHash: hash, text: "1", receivedAt: new Date() });
-  await service.handleIncomingMessage({ whatsappNumberHash: hash, text: "Nein", receivedAt: new Date() }); // keine Beschwerden
+  await service.handleIncomingMessage({ whatsappNumberHash: hash, whatsappNumberEncrypted: "enc-test", text: "Hallo", receivedAt: new Date() });
+  await service.handleIncomingMessage({ whatsappNumberHash: hash, whatsappNumberEncrypted: "enc-test", text: "Ja", receivedAt: new Date() });
+  await service.handleIncomingMessage({ whatsappNumberHash: hash, whatsappNumberEncrypted: "enc-test", text: "1", receivedAt: new Date() });
+  await service.handleIncomingMessage({ whatsappNumberHash: hash, whatsappNumberEncrypted: "enc-test", text: "Nein", receivedAt: new Date() }); // keine Beschwerden
   // Letzte Antwort (Stress-Frage) schliesst das Onboarding ab und enthaelt
   // die eigentlichen Uebungs-/Tipp-Nachrichten -- Rueckgabewert daher wichtig.
-  return service.handleIncomingMessage({ whatsappNumberHash: hash, text: "Nein", receivedAt: new Date() }); // nicht gestresst
+  return service.handleIncomingMessage({ whatsappNumberHash: hash, whatsappNumberEncrypted: "enc-test", text: "Nein", receivedAt: new Date() }); // nicht gestresst
 }
 
 test("Opt-out: 'Stop' setzt optedOut und stoppt weitere Coaching-Antworten", async () => {
   const { service, employees } = freshService();
   await completeOnboarding(service, "h1");
 
-  const r1 = await service.handleIncomingMessage({ whatsappNumberHash: "h1", text: "Stop", receivedAt: new Date() });
+  const r1 = await service.handleIncomingMessage({ whatsappNumberHash: "h1", whatsappNumberEncrypted: "enc-test", text: "Stop", receivedAt: new Date() });
   assert.ok(r1[0].type === "text" && r1[0].text.includes("nicht mehr"));
 
   const employee = await employees.findByWhatsappHash("h1");
   assert.equal(employee?.optedOut, true);
 
-  const r2 = await service.handleIncomingMessage({ whatsappNumberHash: "h1", text: "Wie geht's?", receivedAt: new Date() });
+  const r2 = await service.handleIncomingMessage({ whatsappNumberHash: "h1", whatsappNumberEncrypted: "enc-test", text: "Wie geht's?", receivedAt: new Date() });
   assert.ok(r2[0].type === "text" && r2[0].text.includes("abgemeldet"));
 });
 
 test("Opt-in: 'Start' nach Abmeldung setzt optedOut wieder zurueck", async () => {
   const { service, employees } = freshService();
   await completeOnboarding(service, "h1");
-  await service.handleIncomingMessage({ whatsappNumberHash: "h1", text: "Stop", receivedAt: new Date() });
+  await service.handleIncomingMessage({ whatsappNumberHash: "h1", whatsappNumberEncrypted: "enc-test", text: "Stop", receivedAt: new Date() });
 
-  const r = await service.handleIncomingMessage({ whatsappNumberHash: "h1", text: "Start", receivedAt: new Date() });
+  const r = await service.handleIncomingMessage({ whatsappNumberHash: "h1", whatsappNumberEncrypted: "enc-test", text: "Start", receivedAt: new Date() });
   assert.ok(r[0].type === "text" && r[0].text.includes("zurück"));
 
   const employee = await employees.findByWhatsappHash("h1");
@@ -56,10 +56,11 @@ test("Opt-in: 'Start' nach Abmeldung setzt optedOut wieder zurueck", async () =>
 test("Eskalation funktioniert weiterhin, auch nach Abmeldung (Sicherheit hat Vorrang)", async () => {
   const { service } = freshService();
   await completeOnboarding(service, "h1");
-  await service.handleIncomingMessage({ whatsappNumberHash: "h1", text: "Stop", receivedAt: new Date() });
+  await service.handleIncomingMessage({ whatsappNumberHash: "h1", whatsappNumberEncrypted: "enc-test", text: "Stop", receivedAt: new Date() });
 
   const r = await service.handleIncomingMessage({
     whatsappNumberHash: "h1",
+    whatsappNumberEncrypted: "enc-test",
     text: "Die Schmerzen strahlen jetzt ins Bein aus",
     receivedAt: new Date(),
   });
@@ -72,7 +73,7 @@ test("sendDailyReminders: verschickt an abgeschlossene, nicht abgemeldete Mitarb
 
   const batches = await service.sendDailyReminders();
   assert.equal(batches.length, 1);
-  assert.equal(batches[0].whatsappNumberHash, "h1");
+  assert.equal(batches[0].whatsappNumberEncrypted, "enc-test");
 
   const events = await usageEvents.listByCompany("pilot-company");
   const exerciseSentCount = events.filter((e) => e.eventType === "EXERCISE_SENT").length;
@@ -82,7 +83,7 @@ test("sendDailyReminders: verschickt an abgeschlossene, nicht abgemeldete Mitarb
 test("sendDailyReminders: ueberspringt abgemeldete Mitarbeitende", async () => {
   const { service } = freshService();
   await completeOnboarding(service, "h1");
-  await service.handleIncomingMessage({ whatsappNumberHash: "h1", text: "Stop", receivedAt: new Date() });
+  await service.handleIncomingMessage({ whatsappNumberHash: "h1", whatsappNumberEncrypted: "enc-test", text: "Stop", receivedAt: new Date() });
 
   const batches = await service.sendDailyReminders();
   assert.equal(batches.length, 0);
@@ -108,7 +109,7 @@ test("sendWeeklyCheckins setzt awaitingWeeklyCheckin, Emoji-Antwort wird korrekt
   const employee = await employees.findByWhatsappHash("h1");
   assert.equal(employee?.awaitingWeeklyCheckin, true);
 
-  const r = await service.handleIncomingMessage({ whatsappNumberHash: "h1", text: "🙂", receivedAt: new Date() });
+  const r = await service.handleIncomingMessage({ whatsappNumberHash: "h1", whatsappNumberEncrypted: "enc-test", text: "🙂", receivedAt: new Date() });
   assert.ok(r[0].type === "text" && r[0].text.includes("Danke"));
 
   const updated = await employees.findByWhatsappHash("h1");
@@ -124,7 +125,7 @@ test("Wochen-Check-in: ungueltige Antwort wird abgelehnt, awaitingWeeklyCheckin 
   await completeOnboarding(service, "h1");
   await service.sendWeeklyCheckins();
 
-  const r = await service.handleIncomingMessage({ whatsappNumberHash: "h1", text: "sechs", receivedAt: new Date() });
+  const r = await service.handleIncomingMessage({ whatsappNumberHash: "h1", whatsappNumberEncrypted: "enc-test", text: "sechs", receivedAt: new Date() });
   assert.ok(r[0].type === "text" && r[0].text.includes("😢"));
 
   const employee = await employees.findByWhatsappHash("h1");

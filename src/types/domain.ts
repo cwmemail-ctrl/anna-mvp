@@ -22,6 +22,12 @@ export interface Employee {
   companyId: string;
   departmentId?: string;
   whatsappNumberHash: string;
+  // Reversibel verschluesselte (nicht gehashte!) Telefonnummer -- siehe
+  // whatsapp/numberCrypto.ts. Noetig, um spaeter aktiv Nachrichten zu
+  // verschicken (Scheduler-Trigger); aus whatsappNumberHash allein liesse
+  // sich die Nummer nie zurueckgewinnen, da der absichtlich irreversibel ist.
+  // Steht weiterhin nie im Klartext in der Datenbank.
+  whatsappNumberEncrypted: string;
   onboardingStatus: OnboardingStatus;
   onboardingStep: OnboardingStep;
   workType?: WorkType;
@@ -152,6 +158,9 @@ export interface UsageEvent {
 // und übersetzt nur dorthin.
 export interface IncomingMessage {
   whatsappNumberHash: string;
+  // Reversibel verschluesselte Nummer (siehe whatsapp/numberCrypto.ts) --
+  // wird nur bei Employee-Neuanlage gespeichert, danach nicht mehr gebraucht.
+  whatsappNumberEncrypted: string;
   text: string;
   receivedAt: Date;
 }

@@ -107,7 +107,7 @@ export class CoachingService {
   async handleIncomingMessage(message: IncomingMessage): Promise<OutgoingMessage[]> {
     let employee = await this.employees.findByWhatsappHash(message.whatsappNumberHash);
     if (!employee) {
-      employee = await this.employees.create(message.whatsappNumberHash, DEFAULT_COMPANY_ID);
+      employee = await this.employees.create(message.whatsappNumberHash, message.whatsappNumberEncrypted, DEFAULT_COMPANY_ID);
     }
 
     // GESCHAEFTSREGELN.md Regel 2: Eskalation hat IMMER Vorrang -- unabhängig
@@ -282,9 +282,9 @@ export class CoachingService {
   // externe Trigger mehrfach aufgerufen wird. Uebersprungen werden: nicht
   // abgeschlossenes Onboarding, abgemeldete Mitarbeitende (optedOut) und
   // Mitarbeitende, die heute schon eine Erinnerung bekommen haben.
-  async sendDailyReminders(): Promise<Array<{ whatsappNumberHash: string; messages: OutgoingMessage[] }>> {
+  async sendDailyReminders(): Promise<Array<{ whatsappNumberEncrypted: string; messages: OutgoingMessage[] }>> {
     const companyEmployees = await this.employees.listByCompany(DEFAULT_COMPANY_ID);
-    const results: Array<{ whatsappNumberHash: string; messages: OutgoingMessage[] }> = [];
+    const results: Array<{ whatsappNumberEncrypted: string; messages: OutgoingMessage[] }> = [];
 
     for (const employee of companyEmployees) {
       if (employee.onboardingStatus !== "COMPLETED") continue;
@@ -306,7 +306,7 @@ export class CoachingService {
       // in die Frueh-Nachricht. morningGreeting() liefert [] ohne
       // freigegebenen Spruch -- kein Fehlerfall, nur der Gruss fehlt dann.
       results.push({
-        whatsappNumberHash: employee.whatsappNumberHash,
+        whatsappNumberEncrypted: employee.whatsappNumberEncrypted,
         messages: [...morningGreeting(), ...exerciseMessages, feedbackQuickReply()],
       });
     }
@@ -317,9 +317,9 @@ export class CoachingService {
   // Externer Scheduler-Trigger fuer die woechentliche Selbsteinschaetzung
   // (Luecke 4). Setzt awaitingWeeklyCheckin, damit die naechste eingehende
   // Nachricht in continueCoachingDialog als Check-in-Wert interpretiert wird.
-  async sendWeeklyCheckins(): Promise<Array<{ whatsappNumberHash: string; messages: OutgoingMessage[] }>> {
+  async sendWeeklyCheckins(): Promise<Array<{ whatsappNumberEncrypted: string; messages: OutgoingMessage[] }>> {
     const companyEmployees = await this.employees.listByCompany(DEFAULT_COMPANY_ID);
-    const results: Array<{ whatsappNumberHash: string; messages: OutgoingMessage[] }> = [];
+    const results: Array<{ whatsappNumberEncrypted: string; messages: OutgoingMessage[] }> = [];
 
     for (const employee of companyEmployees) {
       if (employee.onboardingStatus !== "COMPLETED") continue;
@@ -329,7 +329,7 @@ export class CoachingService {
       await this.conversations.append(employee.id, "ASSISTANT", WEEKLY_CHECKIN_PROMPT, false);
 
       results.push({
-        whatsappNumberHash: employee.whatsappNumberHash,
+        whatsappNumberEncrypted: employee.whatsappNumberEncrypted,
         messages: [{ type: "quickReply", text: WEEKLY_CHECKIN_PROMPT, options: WEEKLY_CHECKIN_OPTIONS }],
       });
     }
@@ -341,9 +341,9 @@ export class CoachingService {
   // Chat-Antwort) -- bewusst getrennt von der Frueh-Uebung, eigener,
   // spaeterer Zeitpunkt (z. B. 10 Uhr). Liefert eine leere Liste, solange
   // kein Tipp in healthTips.data.ts freigegeben ist.
-  async sendForenoonHealthTip(): Promise<Array<{ whatsappNumberHash: string; messages: OutgoingMessage[] }>> {
+  async sendForenoonHealthTip(): Promise<Array<{ whatsappNumberEncrypted: string; messages: OutgoingMessage[] }>> {
     const companyEmployees = await this.employees.listByCompany(DEFAULT_COMPANY_ID);
-    const results: Array<{ whatsappNumberHash: string; messages: OutgoingMessage[] }> = [];
+    const results: Array<{ whatsappNumberEncrypted: string; messages: OutgoingMessage[] }> = [];
     const tipMessages = dailyHealthTipMessage();
     if (tipMessages.length === 0) return results;
 
@@ -354,7 +354,7 @@ export class CoachingService {
       const firstTip = tipMessages[0];
       const text = firstTip.type === "text" ? firstTip.text : "";
       await this.conversations.append(employee.id, "ASSISTANT", text, false);
-      results.push({ whatsappNumberHash: employee.whatsappNumberHash, messages: tipMessages });
+      results.push({ whatsappNumberEncrypted: employee.whatsappNumberEncrypted, messages: tipMessages });
     }
 
     return results;
