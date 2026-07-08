@@ -111,20 +111,29 @@ function isNonDownloadableVideoPageUrl(url: string): boolean {
   return /(?:youtube\.com\/(?:watch|shorts)|youtu\.be\/)/i.test(url);
 }
 
-// Entscheidet Video- vs. Bild- vs. Text-Versand: videoUrl geht vor imageUrl
-// geht vor reinem Text. Beide Medientypen bekommen den gleichen Begleittext
-// als Caption. YouTube-artige Seiten-Links werden trotz gesetzter videoUrl
-// als Text mit Link behandelt (siehe isNonDownloadableVideoPageUrl).
+// Entscheidet Video- vs. Bild- vs. Text-Versand. Die Beschreibung wird
+// IMMER als eigene Text-Nachricht verschickt (nicht nur als Video-/Bild-
+// Caption) -- damit sie auch ankommt, wenn der Medienversand selbst
+// fehlschlaegt (z. B. Video ueber WhatsApps 16-MB-Limit, siehe Chat-Antwort
+// vom Debugging am 8.7.). YouTube-artige Seiten-Links werden trotz
+// gesetzter videoUrl als Text mit Link behandelt (siehe
+// isNonDownloadableVideoPageUrl).
 export function buildExerciseOutgoingMessages(exercise: Exercise): OutgoingMessage[] {
   const caption = formatExerciseMessage(exercise);
   if (exercise.videoUrl && !isNonDownloadableVideoPageUrl(exercise.videoUrl)) {
-    return [{ type: "video", videoUrl: exercise.videoUrl, caption }];
+    return [
+      { type: "text", text: caption },
+      { type: "video", videoUrl: exercise.videoUrl },
+    ];
   }
   if (exercise.videoUrl) {
     return [{ type: "text", text: `${caption}\n\n${exercise.videoUrl}` }];
   }
   if (exercise.imageUrl) {
-    return [{ type: "image", imageUrl: exercise.imageUrl, caption }];
+    return [
+      { type: "text", text: caption },
+      { type: "image", imageUrl: exercise.imageUrl },
+    ];
   }
   return [{ type: "text", text: caption }];
 }

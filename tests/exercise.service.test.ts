@@ -25,8 +25,9 @@ function baseExercise(overrides: Partial<Exercise>): Exercise {
 
 test("direkte mp4-URL wird als Video versendet", () => {
   const messages = buildExerciseOutgoingMessages(baseExercise({ videoUrl: "https://example.com/uebung.mp4" }));
-  assert.equal(messages.length, 1);
-  assert.equal(messages[0].type, "video");
+  assert.equal(messages.length, 2); // Beschreibung immer als eigene Text-Nachricht + Video
+  assert.equal(messages[0].type, "text");
+  assert.equal(messages[1].type, "video");
 });
 
 test("youtu.be-Link wird NICHT als Video versendet, sondern als Text mit Link", () => {
@@ -45,9 +46,11 @@ test("youtube.com/watch-Link wird ebenfalls als Text behandelt", () => {
   assert.equal(messages[0].type, "text");
 });
 
-test("nur imageUrl gesetzt -> Bild-Nachricht", () => {
+test("nur imageUrl gesetzt -> Beschreibung als Text + Bild-Nachricht", () => {
   const messages = buildExerciseOutgoingMessages(baseExercise({ imageUrl: "https://example.com/bild.jpg" }));
-  assert.equal(messages[0].type, "image");
+  assert.equal(messages.length, 2);
+  assert.equal(messages[0].type, "text");
+  assert.equal(messages[1].type, "image");
 });
 
 test("weder videoUrl noch imageUrl -> Text-Fallback", () => {
